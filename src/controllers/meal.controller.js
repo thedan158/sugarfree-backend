@@ -45,7 +45,7 @@ export const MealController = {
         });
       res.status(200).json({
         success: true,
-        message: "Meal added",
+        message: "Meal is added",
       });
     } catch (error) {
       res.status(500).json({
