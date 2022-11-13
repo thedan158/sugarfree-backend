@@ -45,6 +45,7 @@ export const ReportController = {
         res.status(200).json({
           success: true,
           message: "Sugar level saved",
+          sugarLevel: sugarLevel,
         });
       }
     } catch (error) {
@@ -89,6 +90,7 @@ export const ReportController = {
         res.status(200).json({
           success: true,
           message: "BMI saved",
+          BMI: BMI,
         });
       }
     } catch (error) {

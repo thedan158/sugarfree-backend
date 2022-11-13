@@ -17,7 +17,8 @@ const db = admin.firestore();
 export const AuthController = {
   //*Login user
   loginUser: async (req, res) => {
-    const user = await db.collection("Users").doc(req.body.username).get();
+    const usernameLowerCase = req.body.username.toLowerCase()
+    const user = await db.collection("Users").doc(usernameLowerCase).get();
     try {
       console.log(user.data());
       if (!user) {
@@ -37,13 +38,13 @@ export const AuthController = {
           });
         } else {
           const loginToken = jwt.sign(
-            { username: req.body.username },
+            { username: usernameLowerCase},
             "secret",
             { expiresIn: "2h" }
           );
           await db
             .collection("Users")
-            .doc(req.body.username)
+            .doc(usernameLowerCase)
             .update({ token: loginToken });
           res.status(200).json({
             success: true,
@@ -51,6 +52,7 @@ export const AuthController = {
             role: user.data().role,
             _id: user.data()._id,
             imagePath: user.data().imagePath,
+            username: usernameLowerCase,
           });
         }
       }
@@ -359,24 +361,4 @@ export const AuthController = {
     }
   },
   //*End Region
-
-  //*Region Get all Doctors
-  getAllDoctor: async (req, res) => {
-    try {
-      const user = db.collection("Users");
-      const snapshot = await user.where("role", "==", "doctor").get();
-      snapshot.forEach((doc) => {
-        console.log(doc.data());
-      });
-      res.status(200).json({
-        success: true,
-        message: snapshot.docs.map((doc) => doc.data()),
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error,
-      });
-    }
-  },
 };
