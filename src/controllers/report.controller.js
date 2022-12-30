@@ -101,6 +101,71 @@ export const ReportController = {
     }
   },
   //*End Region
+  //*Region save today BMI
+  createPrescription: async (req, res) => {
+    try {
+      const { date, diagnostic, doctorName, duration, medicineList } = req.body;
+      const user = await db.collection("Users").doc(req.params.username).get();
+      if (!user) {
+        res.status(201).json({
+          success: false,
+          message: "User not found",
+        });
+      } else {
+        await db
+          .collection("Users")
+          .doc(req.params.username)
+          .collection("Prescription")
+          .doc(date)
+          .set({
+            date: date,
+            diagnostic: diagnostic,
+            doctorName: doctorName,
+            duration: duration,
+            medicineList: medicineList,
+            status: req.body.status ? req.body.status : "Unfinished",
+            patientUsername: req.params.username,
+          });
+        res.status(200).json({
+          success: true,
+          message: "Prescription saved",
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
+  getAllPrescription: async (req, res) => {
+    try {
+      const { username } = req.params;
+      const user = await db.collection("Users").doc(username).get();
+      if (!user) {
+        res.status(201).json({
+          success: false,
+          message: "User not found",
+        });
+      } else {
+        const snapshot = await db
+          .collection("Users")
+          .doc(username)
+          .collection("Prescription")
+          .get();
+        res.status(200).json({
+          success: true,
+          message: snapshot.docs.map((doc) => doc.data()),
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
+  //*End Region
 
   //*Region Get today sugar level
   getTodayReport: async (req, res) => {
@@ -139,35 +204,35 @@ export const ReportController = {
       });
     }
   },
-    //*End Region
+  //*End Region
 
-    //*Region Get all report
-    getAllReport: async (req, res) => {
-      try {
-        const { username } = req.body;
-        console.log(username);
-        const user = await db.collection("Users").doc(username).get();
-        if (!user) {
-          res.status(501).json({
-            success: false,
-            message: "User not found",
-          });
-        } else {
-          const snapshot = await db
-            .collection("Users")
-            .doc(username)
-            .collection("Reports")
-            .get();
-          res.status(200).json({
-            success: true,
-            message: snapshot.docs.map((doc) => doc.data()),
-          });
-        }
-      } catch (error) {
-        res.status(500).json({
+  //*Region Get all report
+  getAllReport: async (req, res) => {
+    try {
+      const { username } = req.body;
+      console.log(username);
+      const user = await db.collection("Users").doc(username).get();
+      if (!user) {
+        res.status(501).json({
           success: false,
-          message: error,
+          message: "User not found",
+        });
+      } else {
+        const snapshot = await db
+          .collection("Users")
+          .doc(username)
+          .collection("Reports")
+          .get();
+        res.status(200).json({
+          success: true,
+          message: snapshot.docs.map((doc) => doc.data()),
         });
       }
-    },
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
 };

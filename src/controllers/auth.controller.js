@@ -22,7 +22,7 @@ export const AuthController = {
     try {
       console.log(user.data());
       if (!user) {
-        res.status(501).json({
+        res.status(201).json({
           success: false,
           message: "User not found",
         });
@@ -32,7 +32,7 @@ export const AuthController = {
           user.data().password
         );
         if (!isMatchPassword) {
-          res.status(501).json({
+          res.status(201).json({
             success: false,
             message: "Incorrect username or password",
           });

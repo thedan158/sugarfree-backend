@@ -65,4 +65,23 @@ export const DoctorController = {
       });
     }
   },
+  getAllMedicine: async (req, res) => {
+    const { type } = req.params;
+    console.log(type);
+    try {
+      const snapshot = await db
+        .collection("Pill")
+        .where("type", "==", type)
+        .get();
+      res.status(200).json({
+        success: true,
+        message: snapshot.docs.map((doc) => doc.data()),
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
 };
