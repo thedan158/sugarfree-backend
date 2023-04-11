@@ -235,4 +235,113 @@ export const ReportController = {
       });
     }
   },
+
+  createService: async (req, res) => {
+    try {
+      const { legalName, idType, idNumber, publishedDate, publishedLocation } = req.body;
+      var today = new Date();
+      const dd = String(today.getDate()).padStart(2, "0");
+      const mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+      const yyyy = String(today.getFullYear());
+      console.log(dd, mm, yyyy);
+      today = yyyy + "-" + mm + "-" + dd;
+      console.log(today);
+      const user = await db.collection("Users").doc(req.params.username).get();
+      if (!user) {
+        res.status(201).json({
+          success: false,
+          message: "User not found",
+        });
+      } else {
+        await db
+          .collection("Users")
+          .doc(req.params.username)
+          .collection("Service")
+          .doc(req.body.date ? req.body.date : today)
+          .set({
+            legal_name: legalName,
+            id_type: idType,
+            id_number: idNumber,
+            status: req.body.status ? req.body.status : "Unfinished",
+            published_date: publishedDate,
+            published_location: publishedLocation,
+            date: req.body.date ? req.body.date : today
+          });
+        res.status(200).json({
+          success: true,
+          message: "Request created",
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
+  getAllService: async (req, res) => {
+    try {
+      const { username } = req.params;
+      console.log(username);
+      const user = await db.collection("Users").doc(username).get();
+      if (!user) {
+        res.status(201).json({
+          success: false,
+          message: "User not found",
+        });
+      } else {
+        const snapshot = await db
+          .collection("Users")
+          .doc(username)
+          .collection("Service")
+          .get();
+        res.status(200).json({
+          success: true,
+          message: snapshot.docs.map((doc) => doc.data()),
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
+  getAllServiceFromEveryUser: async (req, res) => {
+    try {
+      const userSnapshots = await db.collection("Users").get();
+      const services = [];
+      for (const userSnapshot of userSnapshots.docs) {
+        const serviceSnapshots = await userSnapshot
+          .ref.collection("Service")
+          .get();
+
+        for (const serviceSnapshot of serviceSnapshots.docs) {
+          services.push({
+            userId: userSnapshot.id,
+            ...serviceSnapshot.data()
+          });
+        }
+      }
+      if (services) {
+        res.status(200).json({
+          success: true,
+          message: services,
+        });
+      } else {
+
+        res.status(201).json({
+          success: true,
+          message: "No request",
+        });
+      }
+
+    }
+    catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
 };

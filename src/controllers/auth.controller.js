@@ -37,22 +37,10 @@ export const AuthController = {
             message: "Incorrect username or password",
           });
         } else {
-          const loginToken = jwt.sign(
-            { username: usernameLowerCase},
-            "secret",
-            { expiresIn: "2h" }
-          );
-          await db
-            .collection("Users")
-            .doc(usernameLowerCase)
-            .update({ token: loginToken });
           res.status(200).json({
             success: true,
             message: "User Logged in",
-            role: user.data().role,
-            _id: user.data()._id,
-            imagePath: user.data().imagePath,
-            username: usernameLowerCase,
+            data: user.data()
           });
         }
       }
@@ -71,45 +59,36 @@ export const AuthController = {
       const user = await db.collection("Users").doc(req.body.username).get();
       console.log(user.data());
       if (user.data() != undefined) {
-        res.status(501).json({
+        res.status(201).json({
           success: false,
           message: "Username existed",
         });
       } else {
         const isValidPassword = validator.isLength(req.body.password, 8, 30);
         if (!isValidPassword) {
-          res.status(501).json({
+          res.status(201).json({
             success: false,
             message: "Password length must from 8 to 30 characters",
           });
         }
-        const isValidPhoneNumber = validator.isNumeric(req.body.phoneNumber);
-        if (!isValidPhoneNumber) {
-          res.status(501).json({
-            success: false,
-            message: "Invalid phonenumber",
-          });
-        }
-        if (isValidPassword && isValidPhoneNumber) {
+        if (isValidPassword) {
           await db
             .collection("Users")
             .doc(req.body.username)
             .set({
-              _id: Math.random().toString(36).substring(7),
-              fullname: req.body.fullname,
-              phoneNumber: req.body.phoneNumber,
               username: req.body.username,
               password: await bcrypt.hash(req.body.password, 10),
-              role: "patient",
+              role: 'user',
               imagePath:
                 "https://firebasestorage.googleapis.com/v0/b/le-repas.appspot.com/o/images%2Fgood.png?alt=media&token=de139437-3a20-4eb3-ba56-f6a591779d15",
-              token: jwt.sign({ username: req.body.username }, "secret", {
-                expiresIn: "2h",
-              }),
             });
           res.status(200).json({
             success: true,
             message: "User created",
+            data: {
+              username: req.body.username,
+              role: 'user'
+            }
           });
         }
       }
@@ -127,7 +106,7 @@ export const AuthController = {
     try {
       const user = await db.collection("Users").doc(req.params.username).get();
       if (!user.data()) {
-        res.status(501).json({
+        res.status(201).json({
           success: false,
           message: "Invalid username",
         });
@@ -149,38 +128,27 @@ export const AuthController = {
   //*Region Update User
   updateInfo: async (req, res) => {
     try {
-      console.log("username: " + req.params.username);
-      console.log("req.body: " + req.body);
       const user = await db.collection("Users").doc(req.params.username).get();
-      console.log("user: " + user);
       if (!user.data()) {
-        res.status(501).json({
+        res.status(201).json({
           success: false,
           message: "Invalid username",
         });
         return;
       }
-      if (req.body.password) {
-        if (req.body.password.length < 6) {
-          res.status(501).json({
-            success: false,
-            message: "Password must be at least 6 characters",
-          });
-          return;
-        }
-      }
       await db.collection("Users").doc(req.params.username).set(
         {
-          fullname: req.body.fullname,
-          email: req.body.email,
-          phoneNumber: req.body.phoneNumber,
-          address: req.body.address,
-          imagePath: req.body.imagePath,
+          legal_name: req.body.legal_name,
+          nationality: req.body.nationality,
+          id_type: req.body.id_type,
+          id_number: req.body.id_number,
+          date_of_birth: req.body.date_of_birth,
+          image_path: req.body.image_path,
+          phone: req.body.phone,
+          address: req.body.address
         },
         { merge: true }
       );
-
-      console.log("userSetdata: true");
       res.status(200).json({
         success: true,
         message: "Profile Updated",
@@ -200,7 +168,7 @@ export const AuthController = {
       const user = await db.collection("Users").doc(req.body.username).get();
       console.log(user.data());
       if (!user) {
-        return res.status(501).json({
+        return res.status(201).json({
           success: false,
           message: "User not found",
         });
@@ -211,7 +179,7 @@ export const AuthController = {
         );
         console.log("Matched Password:" + isMatchPassword);
         if (!isMatchPassword) {
-          return res.status(501).json({
+          return res.status(201).json({
             success: false,
             message: "Incorrect password",
           });
@@ -228,7 +196,7 @@ export const AuthController = {
               30
             );
             if (!isValidPassword || !isValidPassword1) {
-              return res.status(501).json({
+              return res.status(201).json({
                 success: false,
                 message: "Password length must from 8 to 30 characters",
               });
@@ -246,7 +214,7 @@ export const AuthController = {
               .status(200)
               .json({ success: true, message: "Password changed" });
           } else {
-            return res.status(501).json({
+            return res.status(201).json({
               success: false,
               message: "Password confirm not match",
             });
@@ -353,6 +321,30 @@ export const AuthController = {
         success: true,
         message: "Username available",
       });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error,
+      });
+    }
+  },
+  searchProfile: async (req, res) => {
+    try {
+      const usersRef = db.collection("Users")
+      const query = usersRef.where("id_number", "==", req.body.id_number);
+      const querySnapshot = await query.get();
+      if (querySnapshot.empty) {
+        res.status(201).json({
+          success: false,
+          message: "This id number is not exist in the system",
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          data: querySnapshot.docs[0].data(),
+        });
+      }
+
     } catch (error) {
       res.status(500).json({
         success: false,

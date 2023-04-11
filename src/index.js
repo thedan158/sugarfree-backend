@@ -43,7 +43,7 @@ app.use("/doctor", doctorRouters);
 //#end region
 
 //#endregion
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 server.listen(port, "0.0.0.0", () => {
   console.log(`Server API listening at http://localhost:${port}`);
 });

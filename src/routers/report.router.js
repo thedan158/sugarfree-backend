@@ -11,8 +11,17 @@ router.post(
   "/createPrescription/:username",
   ReportController.createPrescription
 );
+router.post(
+  "/createService/:username",
+  ReportController.createService
+);
 router.get(
   "/getAllPrescription/:username",
   ReportController.getAllPrescription
 );
+router.get(
+  "/getAllService",
+  ReportController.getAllServiceFromEveryUser
+);
+router.get('/getAllService/:username', ReportController.getAllService)
 export default router;
